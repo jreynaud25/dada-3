@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Slot Machine Rotation with Cube</title>
+    <style>
+      @font-face {
+        font-family: "GTFAdieu Black";
+        src: url("./fonts/GTFAdieuTRIAL-Black.otf") format("opentype");
+        font-weight: normal;
+        font-style: normal;
+      }
+
+      @font-face {
+        font-family: "GTFAdieu Bold";
+        src: url("./fonts/GTFAdieuTRIAL-Bold.otf") format("opentype");
+        font-weight: bold;
+        font-style: normal;
+      }
+
+      @font-face {
+        font-family: "GTFEkstra Medium";
+        src: url("./fonts/GTFEkstraTRIAL-Medium.otf") format("opentype");
+        font-weight: normal;
+        font-style: medium;
+      }
+
+      body {
+        font-family: "GTFAdieu Black", sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden;
+        margin: 0;
+        background-color: black;
+        flex-direction: column;
+      }
+
+      .scene {
+        width: 80vw;
+        height: 100vh;
+        perspective: 1000px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+
+      .cube {
+        position: relative;
+        width: 80vw;
+        height: 100vh;
+        transform-style: preserve-3d;
+        transform: rotateX(0deg); /* Initial rotation */
+        transition: transform 1.5s cubic-bezier(0.25, 1, 0.5, 1);
+      }
+      .face {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 50px;
+        text-transform: uppercase;
+        box-sizing: border-box;
+        cursor: pointer;
+        background: linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 1) 0%,
+            rgb(255 255 255) 100%
+          ),
+          #ffffff74;
+        -webkit-background-clip: text;
+        color: transparent;
+        transition: background-size 0.5s ease;
+        background-size: 0% 100%;
+        background-position: left;
+        background-repeat: no-repeat;
+      }
+      /* Positioning the cube's faces */
+      .face:nth-child(1) {
+        transform: rotateX(0deg) translateZ(50vh);
+      }
+      .face:nth-child(2) {
+        transform: rotateX(90deg) translateZ(50vh);
+      }
+      .face:nth-child(3) {
+        transform: rotateX(180deg) translateZ(50vh);
+      }
+      .face:nth-child(4) {
+        transform: rotateX(-90deg) translateZ(50vh);
+      }
+
+      .image-throw {
+        position: absolute;
+        transition: all 1s cubic-bezier(0.25, 1, 0.5, 1);
+        transform: rotate(0deg);
+        max-height: 100vh;
+      }
+
+      img,
+      video {
+        border-radius: 5px;
+        height: 100%;
+        width: 100%;
+      }
+
+      video {
+        height: 100%;
+      }
+
+      .face {
+        opacity: 0;
+        transition: opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+      }
+
+      .active {
+        opacity: 1;
+        background-size: 100% 100%; /* Ensure it fills the text on active */
+        transition: background-size 0.2s linear;
+      }
+
+      .inactive {
+        opacity: 0.5;
+        background-size: 0% 100%; /* Start with 0% background size */
+        background-position: left;
+        background-repeat: no-repeat;
+      }
+
+      .next-button {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 1000;
+        font-size: 1.5rem;
+        display: none; /* Initially hidden */
+        background-color: rgba(255, 255, 255, 0.285);
+        backdrop-filter: blur(20px);
+        padding: 0.5rem;
+        align-items: center;
+        padding-bottom: 0.1rem;
+        padding-top: 0.2rem;
+        border-radius: 0.25rem;
+        gap: 0.25rem;
+        overflow: hidden;
+        cursor: pointer;
+        font-family: "GTFAdieu Bold";
+        display: none !important;
+      }
+
+      header {
+        position: fixed;
+        top: 1rem;
+        left: 1rem;
+        z-index: 1000;
+        font-size: 1.5rem;
+        display: none; /* Initially hidden */
+        backdrop-filter: blur(20px);
+        padding: 0.5rem;
+        align-items: center;
+        padding-bottom: 0.1rem;
+        padding-top: 0.2rem;
+        border-radius: 0.25rem;
+        gap: 0.25rem;
+        overflow: hidden;
+        cursor: pointer;
+        font-family: "GTFAdieu Bold";
+        display: flex;
+        color: white;
+        display: inline;
+      }
+
+      .load-bar {
+        position: absolute;
+        left: 0;
+        width: 0;
+        height: 100%;
+        background-color: white;
+        z-index: -1;
+        transition: width 0.5s ease;
+      }
+
+      .next-button .heading {
+        font-size: 0.5em;
+        line-height: 106%;
+        font-family: "GTFEkstra Medium";
+        text-transform: uppercase;
+        margin-bottom: 0.4rem;
+        z-index: 1000;
+      }
+
+      .next-button .title {
+        text-transform: uppercase;
+      }
+
+      .da {
+        transform: translate(-50%, -50%);
+      }
+    </style>
+  </head>
+  <body>
+    <header>DADA</header>
+    <div class="next-button" style="display: flex">
+      <div class="load-bar" style="width: 0%"></div>
+      <span class="heading">Next Up</span>
+      <span class="title next-dataset">A New Building</span>
+    </div>
+
+    <div class="scene">
+      <div class="cube">
+        <div class="face active">A NIGHT OUT</div>
+        <div class="face">A NEW BUILDING</div>
+        <div class="face">A BEAUTIFUL HOME</div>
+        <div class="face">A NEW LOOK</div>
+      </div>
+    </div>
+
+    <script>
+      // Datasets for each cube face
+      const mediaDatasets = {
+        "A NIGHT OUT": [
+          "./a-night-out-img/02.mp4",
+          "./a-night-out-img/02.png",
+          "./a-night-out-img/03.png",
+          "./a-night-out-img/04.png",
+          "./a-night-out-img/05.png",
+          "./a-night-out-img/06.png",
+          "./a-night-out-img/07.png",
+          "./a-night-out-img/08.png",
+          "./a-night-out-img/09.png",
+          "./a-night-out-img/10.png",
+          "./a-night-out-img/11.png",
+          "./a-night-out-img/12.png",
+          "./a-night-out-img/13.png",
+          "./a-night-out-img/14.png",
+          "./a-night-out-img/15.png",
+          "./a-night-out-img/16.png",
+          "./a-night-out-img/17.png",
+          "./a-night-out-img/18.png",
+          "./a-night-out-img/19.png",
+          "./a-night-out-img/20.mp4",
+          "./a-night-out-img/20.png",
+          "./a-night-out-img/21.png",
+          "./a-night-out-img/22.png",
+          "./a-night-out-img/23.png",
+          "./a-night-out-img/24.png",
+          "./a-night-out-img/25.png",
+          "./a-night-out-img/26.png",
+          "./a-night-out-img/27.png",
+          "./a-night-out-img/28.png",
+          "./a-night-out-img/29.png",
+          "./a-night-out-img/30.mp4",
+          "./a-night-out-img/30.png",
+          "./a-night-out-img/31.png",
+          "./a-night-out-img/32.png",
+          "./a-night-out-img/33.png",
+          "./a-night-out-img/34.png",
+          "./a-night-out-img/35.png",
+          "./a-night-out-img/36.png",
+          "./a-night-out-img/37.png",
+          "./a-night-out-img/38.png",
+          "./a-night-out-img/39.png",
+
+          // Add the rest of the files from a-night-out-img...
+        ],
+        "A NEW BUILDING": [
+          "./a-new-building-img/1.png",
+          "./a-new-building-img/2.png",
+          "./a-new-building-img/8.mp4",
+          "./a-new-building-img/3.png",
+          "./a-new-building-img/4.png",
+          "./a-new-building-img/6.png",
+          "./a-new-building-img/7.mp4",
+
+          // Add the rest of the files from a-new-building-img...
+        ],
+        "A BEAUTIFUL HOME": [
+          "./a-beautiful-home-img/01.jpg",
+          "./a-beautiful-home-img/02.jpg",
+          "./a-beautiful-home-img/03.jpg",
+          "./a-beautiful-home-img/04.jpg",
+          "./a-beautiful-home-img/05.jpg",
+
+          "./a-beautiful-home-img/06.jpg",
+          "./a-beautiful-home-img/07.jpg",
+          "./a-beautiful-home-img/08.jpg",
+          "./a-beautiful-home-img/09.jpg",
+          "./a-beautiful-home-img/10.mp4",
+
+          // Add the rest of the files from a-beautiful-home-img...
+        ],
+        "A NEW LOOK": [
+          "./a-new-look-img/01.png",
+          "./a-new-look-img/02.png",
+          "./a-new-look-img/03.png",
+          "./a-new-look-img/04.png",
+          // Add the rest of the files from a-new-look-img...
+        ],
+      };
+      let autoThrowInterval;
+      let autoAnimationActive = true;
+      let availableMedia = [];
+      let thrownMediaCount = 0; // Track how many media items have been thrown
+      let rotationX = 0;
+      let throwRateMultiplier = 1; // Tracks how many times the user clicks to increase throw speed
+      let lastScrollTime = 0; // Used to throttle the scroll event
+
+      // Update the load bar based on the number of throws and time progression
+      function updateLoadBar() {
+        const totalMedia = availableMedia.length + thrownMediaCount; // Total number of media (thrown + remaining)
+        const thrownCount = thrownMediaCount; // How many media items have been thrown so far
+        const loadBar = document.querySelector(".load-bar");
+
+        // Calculate the progress as a percentage (how many media have been thrown)
+        const loadBarProgress = (thrownCount / totalMedia) * 100;
+        loadBar.style.width = `${loadBarProgress}%`;
+
+        // Update the gradient on the active face as the load progresses
+        const activeFace = document.querySelector(".face.active");
+        updateFaceGradient(loadBarProgress, activeFace); // Update gradient as per progress
+      }
+
+      // Function to update the text gradient on the active face
+      function updateFaceGradient(progress, faceElement) {
+        // Set the background size according to the loadBar progress (e.g., from 0% to 100%)
+        faceElement.style.backgroundSize = `${progress}% 100%`;
+      }
+
+      // Throw media from outside the bottom of the screen and land at a random position on the screen
+      function throwMedia() {
+        if (availableMedia.length === 0) return;
+
+        const randomIndex = Math.floor(Math.random() * availableMedia.length);
+        const randomMediaUrl = availableMedia.splice(randomIndex, 1)[0]; // Remove the media from the available list
+        thrownMediaCount++; // Increment thrown media count
+
+        const newDiv = document.createElement("div");
+        newDiv.classList.add("image-throw");
+
+        let mediaElement;
+        if (randomMediaUrl.endsWith(".mp4")) {
+          mediaElement = document.createElement("video");
+          mediaElement.src = randomMediaUrl;
+          mediaElement.autoplay = true;
+          mediaElement.loop = true;
+          mediaElement.muted = true;
+        } else {
+          mediaElement = document.createElement("img");
+          mediaElement.src = randomMediaUrl;
+        }
+
+        mediaElement.onload = mediaElement.onloadeddata = () => {
+          const naturalWidth =
+            mediaElement.videoWidth || mediaElement.naturalWidth || 400;
+          const naturalHeight =
+            mediaElement.videoHeight || mediaElement.naturalHeight || 300;
+
+          const scaleFactor = Math.random() * (2 - 1) + 1;
+          const width = naturalWidth * scaleFactor;
+          const height = naturalHeight * scaleFactor;
+          newDiv.style.width = `${width}px`;
+          newDiv.style.height = `${height}px`;
+
+          newDiv.appendChild(mediaElement);
+
+          // Throw the image from outside the bottom of the screen
+          const startX = Math.random() * (window.innerWidth - width); // Random x-axis position within the screen width
+          const startY = window.innerHeight + height; // Start from just below the screen
+          newDiv.style.left = `${startX}px`;
+          newDiv.style.top = `${startY}px`;
+          document.body.appendChild(newDiv);
+
+          setTimeout(() => {
+            const randomAngle = Math.random() * 10 - 5;
+
+            // Move to a random position on the screen
+            const endPosX = Math.random() * (window.innerWidth - width);
+            const endPosY = Math.random() * (window.innerHeight - height);
+
+            newDiv.style.opacity = 1;
+            newDiv.style.left = `${endPosX}px`;
+            newDiv.style.top = `${endPosY}px`;
+            newDiv.style.transform = `rotate(${randomAngle}deg)`;
+          }, 100);
+        };
+
+        // Update the load bar and gradient on each throw
+        updateLoadBar();
+      }
+
+      // Function to display DA.svg with random size, and remove after 1 second
+      function displayDaSvg(width, height, posX, posY) {
+        const daSvg = document.createElement("img");
+        daSvg.src = "./DA.svg"; // Path to your DA.svg file
+        daSvg.style.position = "fixed";
+        daSvg.style.zIndex = "-1";
+        daSvg.classList.add("da");
+
+        // Set random size smaller than the image (between 70% and 90% of the image size)
+        const randomSizeFactor = Math.random() * 0.4 + 0.5;
+        daSvg.style.width = `${width * randomSizeFactor}px`;
+        daSvg.style.height = `${height * randomSizeFactor}px`;
+
+        // Position it at the same position as the image
+        daSvg.style.left = `${posX}px`;
+        daSvg.style.top = `${posY}px`;
+
+        // Append DA.svg to the body
+        document.body.appendChild(daSvg);
+
+        // Remove it after 1 second
+        setTimeout(() => {
+          daSvg.remove();
+        }, 1000);
+      }
+
+      // Throw media from outside the bottom of the screen and land at the clicked position
+      function throwMediaFromPosition(posX, posY) {
+        if (availableMedia.length === 0) return;
+
+        const randomIndex = Math.floor(Math.random() * availableMedia.length);
+        const randomMediaUrl = availableMedia.splice(randomIndex, 1)[0]; // Remove the media from the available list
+        thrownMediaCount++; // Increment thrown media count
+
+        const newDiv = document.createElement("div");
+        newDiv.classList.add("image-throw");
+
+        let mediaElement;
+        if (randomMediaUrl.endsWith(".mp4")) {
+          mediaElement = document.createElement("video");
+          mediaElement.src = randomMediaUrl;
+          mediaElement.autoplay = true;
+          mediaElement.loop = true;
+          mediaElement.muted = true;
+        } else {
+          mediaElement = document.createElement("img");
+          mediaElement.src = randomMediaUrl;
+        }
+
+        mediaElement.onload = mediaElement.onloadeddata = () => {
+          const naturalWidth =
+            mediaElement.videoWidth || mediaElement.naturalWidth || 400;
+          const naturalHeight =
+            mediaElement.videoHeight || mediaElement.naturalHeight || 300;
+
+          const scaleFactor = Math.random() * (2 - 0.75) + 0.75;
+          const width = naturalWidth * scaleFactor;
+          const height = naturalHeight * scaleFactor;
+          newDiv.style.width = `${width}px`;
+          newDiv.style.height = `${height}px`;
+
+          newDiv.appendChild(mediaElement);
+
+          // Throw the image from outside the bottom of the screen
+          const startX = Math.random() * (window.innerWidth - width); // Random x-axis position within the screen width
+          const startY = window.innerHeight + height; // Start from just below the screen
+          newDiv.style.left = `${startX}px`;
+          newDiv.style.top = `${startY}px`;
+          document.body.appendChild(newDiv);
+
+          setTimeout(() => {
+            const randomAngle = Math.random() * 10 - 5;
+
+            // Move to the clicked position
+            newDiv.style.opacity = 1;
+            newDiv.style.left = `${posX - width / 2}px`;
+            newDiv.style.top = `${posY - height / 2}px`;
+            newDiv.style.transform = `rotate(${randomAngle}deg)`;
+          }, 100);
+
+          // Display DA.svg on each click and remove after 1 second
+          displayDaSvg(width, height, posX, posY);
+        };
+
+        // Update the load bar and gradient on each throw
+        updateLoadBar();
+      }
+
+      // Update the auto-throw timing based on the number of items thrown
+      function updateThrowTiming() {
+        clearInterval(autoThrowInterval); // Clear the previous interval
+
+        autoThrowInterval = setInterval(() => {
+          if (availableMedia.length === 0) {
+            clearInterval(autoThrowInterval);
+
+            // When done, set gradient to 100% for the active face
+            const activeFace = document.querySelector(".face.active");
+            updateFaceGradient(100, activeFace); // Set gradient to 100%
+
+            setTimeout(() => switchToNextDataset(), 1000); // Wait 1 second after the last throw
+            return;
+          }
+
+          throwMedia(); // Throw each media
+        }, 500); // Adjust the interval as needed for auto-throw speed
+      }
+
+      // Start throwing media automatically when a new dataset is loaded
+      function startThrowingAndScrolling(
+        mediaDataset,
+        datasetName,
+        nextDatasetName
+      ) {
+        availableMedia = [...mediaDataset];
+        thrownMediaCount = 0; // Reset thrown count for each dataset
+        const totalMedia = availableMedia.length;
+
+        // Reset throw rate multiplier on new dataset
+        throwRateMultiplier = 1;
+
+        // Set next dataset name
+        document.querySelector(".next-dataset").textContent = nextDatasetName;
+
+        let loadBar = document.querySelector(".load-bar");
+        loadBar.style.width = "0%";
+
+        clearInterval(autoThrowInterval);
+
+        // Start the auto-throw interval
+        updateThrowTiming();
+      }
+
+      // Handle the fade-out and removal of media before switching to the next dataset
+      function handleFaceChange() {
+        clearInterval(autoThrowInterval);
+
+        document.body.classList.add("fade-text");
+
+        const allMediaElements = Array.from(
+          document.querySelectorAll(".image-throw")
+        ).reverse();
+        const screenCenterX = window.innerWidth / 2;
+        const screenCenterY = window.innerHeight / 2;
+        allMediaElements.forEach((media, mediaIndex) => {
+          setTimeout(() => {
+            const mediaRect = media.getBoundingClientRect();
+            const mediaX = mediaRect.left + mediaRect.width / 2;
+            const mediaY = mediaRect.top + mediaRect.height / 2;
+
+            const randomAngle = Math.random() * 20 - 10;
+            let targetX = mediaX;
+            let targetY = mediaY;
+
+            if (mediaX > screenCenterX && mediaY > screenCenterY) {
+              targetX = window.innerWidth + mediaRect.width;
+              targetY = window.innerHeight + mediaRect.height;
+            } else if (mediaX > screenCenterX && mediaY < screenCenterY) {
+              targetX = window.innerWidth + mediaRect.width;
+              targetY = -mediaRect.height;
+            } else if (mediaX < screenCenterX && mediaY > screenCenterY) {
+              targetX = -mediaRect.width;
+              targetY = window.innerHeight + mediaRect.height;
+            } else {
+              targetX = -mediaRect.width;
+              targetY = -mediaRect.height;
+            }
+
+            media.style.transition = "all 0.6s cubic-bezier(0.4, 0.0, 1, 1)";
+            media.style.left = `${targetX}px`;
+            media.style.top = `${targetY}px`;
+            media.style.transform = `rotate(${randomAngle}deg)`;
+
+            setTimeout(() => {
+              media.remove();
+            }, 600);
+          }, mediaIndex * 25);
+        });
+      }
+
+      // Switch to the next dataset with a cube rotation effect
+      function switchToNextDataset() {
+        handleFaceChange(); // Fade-out and remove current media
+
+        // Get the currently active face and the next dataset name
+        const activeFace = document.querySelector(".face.active");
+        const faces = Array.from(document.querySelectorAll(".face"));
+        const activeFaceIndex = faces.indexOf(activeFace);
+        const nextFaceIndex = (activeFaceIndex + 1) % faces.length;
+        const nextNextFaceIndex = (activeFaceIndex + 2) % faces.length;
+
+        const activeFaceText = faces[nextFaceIndex].textContent.trim();
+        const nextFaceText = faces[nextNextFaceIndex].textContent.trim();
+
+        if (mediaDatasets[activeFaceText]) {
+          setTimeout(() => {
+            // Start automatically when the new dataset is loaded
+            startThrowingAndScrolling(
+              mediaDatasets[activeFaceText],
+              activeFaceText,
+              nextFaceText
+            );
+          }, 600); // Wait for fade-out animation to finish
+        }
+
+        // Rotate the cube
+        rotationX -= 90;
+        document.querySelector(
+          ".cube"
+        ).style.transform = `rotateX(${rotationX}deg)`;
+
+        // Update active class on the next face
+        faces.forEach((f) => f.classList.remove("active"));
+        faces.forEach((f) => f.style.backgroundSize = "0% 0%");
+
+        faces[nextFaceIndex].classList.add("active");
+      }
+
+      // Event listener for the "Next" button
+      document.querySelector(".next-button").addEventListener("click", () => {
+        switchToNextDataset();
+      });
+
+      // On face click, increase throw rate and throw from click position
+      document.querySelectorAll(".face").forEach((face) => {
+        face.addEventListener("click", (event) => {
+          throwRateMultiplier += 1; // Increase throw rate multiplier on each click
+          throwMediaFromPosition(event.clientX, event.clientY); // Throw from clicked position
+        });
+      });
+
+      // Throttle scroll to switch faces only after a set delay
+      window.addEventListener("wheel", (event) => {
+        const now = Date.now();
+        if (now - lastScrollTime > 1000) {
+          // 1 second throttle for scroll
+          if (event.deltaY > 0) {
+            switchToNextDataset(); // Scroll down to next face
+          }
+          lastScrollTime = now; // Update last scroll time
+        }
+      });
+
+      // Initial start with "A NIGHT OUT" dataset and set the next dataset
+      startThrowingAndScrolling(
+        mediaDatasets["A NIGHT OUT"],
+        "A NIGHT OUT",
+        "A New Building"
+      );
+    </script>
+  </body>
+</html>
